@@ -1,7 +1,9 @@
+using MongoDB.Bson.Serialization.Attributes;
+
 public class Movie
 {
+    [BsonId]
     public string Id { get; set; } = "";
-    
     public string Title { get; set; } = "";
     public int Year { get; set; }
     public string Summary { get; set; } = "";

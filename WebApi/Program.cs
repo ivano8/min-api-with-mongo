@@ -1,78 +1,62 @@
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // DatabaseSettings registrieren
-var movieDatabaseConfigSection =
-    builder.Configuration.GetSection("DatabaseSettings");
-
+var movieDatabaseConfigSection = builder.Configuration.GetSection("DatabaseSettings");
 builder.Services.Configure<DatabaseSettings>(movieDatabaseConfigSection);
+
+// MovieService als Singleton registrieren
+builder.Services.AddSingleton<IMovieService, MongoMovieService>();
 
 var app = builder.Build();
 
 // Root-Endpoint
 app.MapGet("/", () => "Minimal API Version 1.0");
 
-// Check-Endpoint mit Injection
-app.MapGet("/check",
-    (Microsoft.Extensions.Options.IOptions<DatabaseSettings> options) =>
+// Check-Endpoint
+app.MapGet("/check", (IMovieService movieService) =>
 {
-    try
-    {
-        var mongoDbConnectionString = options.Value.ConnectionString;
-
-        var client = new MongoClient(mongoDbConnectionString);
-
-        var databases = client.ListDatabaseNames().ToList();
-
-        return $"Zugriff auf MongoDB ok. Vorhandene DBs: {string.Join(",", databases)}";
-    }
-    catch (Exception ex)
-    {
-        return $"Fehler: {ex.Message}";
-    }
+    return movieService.Check();
 });
 
 // Insert Movie
-// Wenn Objekt eingefügt werden konnte,
-// wird es mit Statuscode 201 (Created) zurückgegeben.
-// Bei Fehler wird Statuscode 409 (Conflict) zurückgegeben.
-app.MapPost("/api/movies", (Movie movie) =>
+app.MapPost("/api/movies", (IMovieService movieService, Movie movie) =>
 {
-    throw new NotImplementedException();
+    try
+    {
+        movieService.Create(movie);
+        return Results.Created($"/api/movies/{movie.Id}", movie);
+    }
+    catch
+    {
+        return Results.Conflict();
+    }
 });
 
 // Get all Movies
-// Gibt alle vorhandenen Movie-Objekte mit Statuscode 200 Ok zurück.
-app.MapGet("/api/movies", () =>
+app.MapGet("/api/movies", (IMovieService movieService) =>
 {
-    throw new NotImplementedException();
+    return Results.Ok(movieService.Get());
 });
 
 // Get Movie by id
-// Gibt das gewünschte Movie-Objekt mit Statuscode 200 OK zurück.
-// Bei ungültiger id wird Statuscode 404 not found zurückgegeben.
-app.MapGet("/api/movies/{id}", (string id) =>
+app.MapGet("/api/movies/{id}", (IMovieService movieService, string id) =>
 {
-    throw new NotImplementedException();
+    var movie = movieService.Get(id);
+    return movie is not null ? Results.Ok(movie) : Results.NotFound();
 });
 
 // Update Movie
-// Gibt das aktualisierte Movie-Objekt zurück.
-// Der erfolgreiche Update wird mit Statuscode 200 OK quittiert.
-// Bei ungültiger id wird Statuscode 404 not found zurückgegeben
-app.MapPut("/api/movies/{id}", (string id, Movie movie) =>
+app.MapPut("/api/movies/{id}", (IMovieService movieService, string id, Movie movie) =>
 {
-    throw new NotImplementedException();
+    var updated = movieService.Update(id, movie);
+    return updated ? Results.Ok(movie) : Results.NotFound();
 });
 
 // Delete Movie
-// Gibt bei erfolgreicher Löschung Statuscode 204 NoContent zurück.
-// Bei ungültiger id wird Statuscode 404 not found zurückgegeben.
-app.MapDelete("/api/movies/{id}", (string id) =>
+app.MapDelete("/api/movies/{id}", (IMovieService movieService, string id) =>
 {
-    throw new NotImplementedException();
+    var removed = movieService.Remove(id);
+    return removed ? Results.NoContent() : Results.NotFound();
 });
 
 app.Run();
