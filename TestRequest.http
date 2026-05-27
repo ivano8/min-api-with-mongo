@@ -1,0 +1,80 @@
+### Root
+GET http://localhost:5001/
+
+### Check MongoDB connection
+GET http://localhost:5001/check
+
+### Insert Movie 1
+POST http://localhost:5001/api/movies
+Content-Type: application/json
+
+{
+    "id": "2",
+    "title": "The Imitation Game",
+    "year": 2014,
+    "summary": "Alan Turing knackt den Nazi-Enigma-Code im Zweiten Weltkrieg.",
+    "actors": ["Benedict Cumberbatch", "Keira Knightley"]
+}
+
+### Insert Movie 2
+POST http://localhost:5001/api/movies
+Content-Type: application/json
+
+{
+    "id": "3",
+    "title": "Interstellar",
+    "year": 2014,
+    "summary": "Astronauten reisen durch ein Wurmloch auf der Suche nach einer neuen Heimat.",
+    "actors": ["Matthew McConaughey", "Anne Hathaway"]
+}
+
+### Insert Movie - doppelte ID (erwartet 409 Conflict)
+POST http://localhost:5001/api/movies
+Content-Type: application/json
+
+{
+    "id": "1",
+    "title": "Duplikat",
+    "year": 2000,
+    "summary": "Dieser Film sollte nicht eingefügt werden.",
+    "actors": []
+}
+
+### Get all Movies
+GET http://localhost:5001/api/movies
+
+### Get Movie by id (existiert)
+GET http://localhost:5001/api/movies/1
+
+### Get Movie by id (existiert nicht - erwartet 404)
+GET http://localhost:5001/api/movies/999
+
+### Update Movie
+PUT http://localhost:5001/api/movies/1
+Content-Type: application/json
+
+{
+    "id": "1",
+    "title": "The Imitation Game (Director's Cut)",
+    "year": 2014,
+    "summary": "Aktualisierte Beschreibung.",
+    "actors": ["Benedict Cumberbatch"]
+}
+
+### Update Movie - ungültige id (erwartet 404)
+PUT http://localhost:5001/api/movies/999
+Content-Type: application/json
+
+{
+    "id": "999",
+    "title": "Gibt es nicht",
+    "year": 2000,
+    "summary": "",
+    "actors": []
+}
+
+### Delete Movie
+DELETE http://localhost:5001/api/movies/1
+
+### Delete Movie - ungültige id (erwartet 404)
+DELETE http://localhost:5001/api/movies/999
